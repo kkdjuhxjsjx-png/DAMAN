@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة التاجر — سوق السودان</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/enhance.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+</head>
+<body>
+
+<div id="loading" class="access-denied"><div class="spinner spinner-dark" style="width:36px;height:36px"></div></div>
+
+<div id="denied" class="access-denied" style="display:none">
+  <div class="card">
+    <div style="font-size:3rem">🔒</div>
+    <h2>الوصول مرفوض</h2>
+    <p class="muted">هذه الصفحة مخصصة لأصحاب المتاجر والطاقم المصرح لهم فقط.</p>
+    <a href="index.html" class="btn">العودة للرئيسية</a>
+  </div>
+</div>
+
+<div id="dashApp" class="dash-layout" style="display:none">
+  <aside class="dash-sidebar" id="sidebar">
+    <div class="brand"><span class="logo-dot">س</span> سوق السودان</div>
+    <div class="store-chip">
+      <img class="avatar avatar-sm" id="chipLogo" src="" onerror="this.style.display='none'">
+      <div style="min-width:0"><div class="name" id="chipName">—</div><div class="tiny" style="color:#94a3b8" id="chipRole">—</div></div>
+    </div>
+    <nav class="dash-nav">
+      <a href="#" data-section="overview" class="active">📊 نظرة عامة</a>
+      <a href="#" data-section="products">📦 المنتجات</a>
+      <a href="#" data-section="orders">🧾 الطلبات</a>
+      <a href="#" data-section="coupons">🎟️ الكوبونات</a>
+      <a href="#" data-section="payments">💳 وسائل الدفع</a>
+      <a href="#" data-section="reviews">⭐ التقييمات</a>
+      <a href="#" data-section="staff">👥 الطاقم</a>
+      <a href="#" data-section="branding">🎨 الهوية والإعدادات</a>
+      <a href="#" data-section="plan">💎 الخطة والاشتراك</a>
+    </nav>
+    <div class="divider" style="border-color:#1e293b"></div>
+    <a href="index.html" style="color:#94a3b8;font-size:.82rem">← العودة للمتجر الرئيسي</a>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-top">
+      <button class="dash-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('show')">☰</button>
+      <h1 id="pageTitle">نظرة عامة</h1>
+      <div class="row">
+        <a href="#" class="btn btn-outline btn-sm" id="viewStoreLink" target="_blank">عرض المتجر</a>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+
+    <div id="noStore" class="hide">
+      <div class="card center" style="max-width:560px;margin:0 auto">
+        <div style="font-size:3rem">🏪</div>
+        <h2>لم تنشئ متجرك بعد</h2>
+        <p class="muted">ابدأ بإنشاء متجرك الأول خلال دقيقة</p>
+        <button class="btn" onclick="openCreateStore()">إنشاء متجر الآن</button>
+      </div>
+    </div>
+
+    <div id="sections"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal modal-wide" id="modalBody"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script>
+/* ============================================================
+   ✅ Firebase config — updated with your real project
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAxocPULi4vcrm8t8Q3wYrHQ9oWovHXrV4",
+  authDomain: "daman-7f169.firebaseapp.com",
+  projectId: "daman-7f169",
+  storageBucket: "daman-7f169.firebasestorage.app",
+  messagingSenderId: "981649500667",
+  appId: "1:981649500667:web:7709753041388518b6035e",
+  measurementId: "G-L5PDZL05FT"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const escapeHtml = s => (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function toast(m,t='ok'){const w=$('#toastWrap');const el=document.createElement('div');el.className='toast '+t;el.textContent=m;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},3200);}
+function fmtDate(ts){ if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString('ar-EG',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtMoney(n,c){ return (Number(n)||0).toLocaleString('en-US')+' '+(c||'SDG'); }
+
+let state = {
+  user:null, profile:null, storeId:null, store:null,
+  isOwner:false, perms:{}, currentSection:'overview',
+  products:[], orders:[], coupons:[], payments:[], reviews:[], staff:[], planRequests:[]
+};
+
+/* ============================================================
+   ✅ Auth gate — now allows buyers to create their first store
+   ============================================================ */
+async function gate(u){
+  if (!u){ location.replace('index.html?login=1'); return; }
+  state.user = u;
+  const prof = await db.collection('users').doc(u.uid).get();
+  state.profile = prof.exists ? prof.data() : { role:'buyer', displayName: u.displayName };
+
+  const role = state.profile.role;
+
+  // Allow all known roles (buyer included) — merchants without a store will see "create store"
+  if (!['merchant','staff','super_admin','buyer','platform_moderator'].includes(role)){ showDenied(); return; }
+
+  // Owned store?
+  const owned = await db.collection('stores').where('ownerUid','==',u.uid).limit(1).get();
+  if (!owned.empty){
+    state.storeId = owned.docs[0].id;
+    state.store = owned.docs[0].data();
+    state.isOwner = true;
+    state.perms = { canManageProducts:true, canManageOrders:true, canManageCoupons:true, canViewAnalytics:true, canEditPayments:true };
+    // Auto-promote buyer -> merchant if they somehow own a store
+    if (role === 'buyer'){
+      try { await db.collection('users').doc(u.uid).update({ role:'merchant' }); state.profile.role = 'merchant'; } catch(e){}
+    }
+  } else {
+    const staffStores = state.profile.staffStores || [];
+    if (!staffStores.length){
+      // Buyer OR merchant without a store -> allow creating one
+      showNoStore();
+      return;
+    }
+    state.storeId = staffStores[0];
+    const sDoc = await db.collection('stores').doc(state.storeId).get();
+    if (!sDoc.exists){ showNoStore(); return; }
+    state.store = sDoc.data();
+    const permDoc = await db.collection('stores').doc(state.storeId).collection('staff').doc(u.uid).get();
+    state.perms = permDoc.exists ? permDoc.data().permissions || {} : {};
+    if (state.store.status === 'suspended'){ showDenied('تم تعليق المتجر'); return; }
+    state.isOwner = false;
+  }
+
+  bootDashboard();
+}
+function gateError(err){
+  console.error('Access gate error:', err);
+  showDenied();
+  var p=document.querySelector('#denied p');
+  var code=err&&err.code||'';
+  if(p) p.textContent = code==='permission-denied'
+    ? 'قواعد Firestore ترفض قراءة بياناتك (permission-denied). انشر قواعد الأمان المناسبة من Firebase Console ثم أعد المحاولة.'
+    : 'تعذر التحقق من حسابك: '+(err&&err.message||code||'خطأ غير معروف');
+}
+auth.onAuthStateChanged(function(u){ gate(u).catch(gateError); });
+
+function showDenied(msg){
+  $('#loading').style.display='none'; $('#dashApp').style.display='none';
+  if (msg) $('#denied').querySelector('p').textContent = msg;
+  $('#denied').style.display='grid';
+}
+function showNoStore(){
+  $('#loading').style.display='none'; $('#dashApp').style.display='grid';
+  $('#noStore').classList.remove('hide'); $('#sections').innerHTML = '';
+  $('#chipName').textContent = state.profile?.displayName || 'تاجر';
+  $('#chipRole').textContent = 'بدون متجر';
+}
+
+async function bootDashboard(){
+  $('#loading').style.display='none';
+  $('#dashApp').style.display='grid';
+  $('#chipLogo').src = state.store.logo || '';
+  $('#chipName').textContent = state.store.name || 'متجري';
+  $('#chipRole').textContent = state.isOwner ? 'المالك' : 'عضو طاقم';
+  $('#viewStoreLink').href = 'store.html?s=' + encodeURIComponent(state.store.slug);
+
+  $$('.dash-nav a').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    switchSection(a.dataset.section);
+  }));
+
+  await loadAll();
+  switchSection('overview');
+}
+
+async function loadAll(){
+  const sRef = db.collection('stores').doc(state.storeId);
+  const [prod, ord, coup, pay] = await Promise.all([
+    sRef.collection('products').get(),
+    sRef.collection('orders').orderBy('createdAt','desc').limit(200).get(),
+    sRef.collection('coupons').get(),
+    sRef.collection('payments').get()
+  ]);
+  state.products = prod.docs.map(d=>({id:d.id,...d.data()}));
+  state.orders = ord.docs.map(d=>({id:d.id,...d.data()}));
+  state.coupons = coup.docs.map(d=>({id:d.id,...d.data()}));
+  state.payments = pay.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+function switchSection(sec){
+  state.currentSection = sec;
+  $$('.dash-nav a').forEach(a => a.classList.toggle('active', a.dataset.section===sec));
+  const titles = { overview:'نظرة عامة', products:'المنتجات', orders:'الطلبات', coupons:'الكوبونات',
+    payments:'وسائل الدفع', reviews:'التقييمات', staff:'الطاقم', branding:'الهوية والإعدادات', plan:'الخطة والاشتراك' };
+  $('#pageTitle').textContent = titles[sec];
+  const w = $('#sections');
+  if (sec==='overview') renderOverview(w);
+  else if (sec==='products') renderProducts(w);
+  else if (sec==='orders') renderOrders(w);
+  else if (sec==='coupons') renderCoupons(w);
+  else if (sec==='payments') renderPayments(w);
+  else if (sec==='reviews') renderReviews(w);
+  else if (sec==='staff') renderStaff(w);
+  else if (sec==='branding') renderBranding(w);
+  else if (sec==='plan') renderPlan(w);
+}
+
+function renderOverview(w){
+  const pending = state.orders.filter(o=>o.status==='pending').length;
+  const completed = state.orders.filter(o=>o.status==='completed').length;
+  const revenue = state.orders.filter(o=>o.status==='completed').reduce((a,o)=>a+(+o.total||0),0);
+  w.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">المنتجات</div><div class="value">${state.products.length}</div></div>
+      <div class="stat-card"><div class="label">الطلبات الكلية</div><div class="value">${state.orders.length}</div></div>
+      <div class="stat-card"><div class="label">قيد المراجعة</div><div class="value">${pending}</div></div>
+      <div class="stat-card"><div class="label">مكتملة</div><div class="value">${completed}</div></div>
+      <div class="stat-card"><div class="label">الإيرادات المكتملة</div><div class="value" style="font-size:1.2rem">${fmtMoney(revenue, state.store.currency)}</div></div>
+    </div>
+    <div class="section-panel">
+      <h2>أحدث الطلبات</h2>
+      ${state.orders.slice(0,5).map(o=>`
+        <div class="prod-row">
+          <div class="info"><h4>${escapeHtml(o.items?.map(i=>i.name).join(', ')||'—')}</h4>
+            <div class="tiny muted">${escapeHtml(o.buyerName||'')} — ${fmtDate(o.createdAt)}</div></div>
+          <span class="order-status status-${o.status}">${statusLabel(o.status)}</span>
+          <strong>${fmtMoney(o.total, state.store.currency)}</strong>
+        </div>`).join('') || '<p class="muted">لا طلبات بعد</p>'}
+    </div>`;
+}
+
+function statusLabel(s){ return {pending:'قيد الانتظار',under_review:'تحت المراجعة',completed:'مكتمل',rejected:'مرفوض'}[s]||s; }
+
+function renderProducts(w){
+  if (!hasPerm('canManageProducts') && !state.isOwner){ w.innerHTML = noPerm(); return; }
+  w.innerHTML = `
+    <div class="row-between mb-2">
+      <h2 style="margin:0">المنتجات (${state.products.length})</h2>
+      <button class="btn" onclick="openProductForm()">+ منتج جديد</button>
+    </div>
+    <div id="prodList">${state.products.map(p=>`
+      <div class="prod-row">
+        <div class="thumb">${p.image?`<img src="${escapeHtml(p.image)}" onerror="this.style.display='none'">`:''}</div>
+        <div class="info">
+          <h4>${escapeHtml(p.name)}</h4>
+          <div class="tiny muted">${typeLabel(p.type)} — ${fmtMoney(p.price, state.store.currency)}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-outline btn-sm" onclick="openProductForm('${p.id}')">تعديل</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">حذف</button>
+        </div>
+      </div>`).join('') || '<div class="empty"><p>لا منتجات — أضف منتجك الأول</p></div>'}</div>`;
+}
+function typeLabel(t){ return {digital_file:'ملف رقمي',game_topup:'شحن/اشتراك',code_stock:'كود',physical_or_custom:'منتج مخصص'}[t]||t; }
+
+function openProductForm(id){
+  const p = id ? state.products.find(x=>x.id===id) : { type:'digital_file', name:'', description:'', price:0, image:'', active:true };
+  const isEdit = !!id;
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>${isEdit?'تعديل':'إضافة'} منتج</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>نوع المنتج</label>
+      <select class="input" id="pfType" onchange="onProductTypeChange()" ${isEdit?'disabled':''}>
+        <option value="digital_file" ${p.type==='digital_file'?'selected':''}>ملف رقمي</option>
+        <option value="game_topup" ${p.type==='game_topup'?'selected':''}>شحن لعبة / اشتراك</option>
+        <option value="code_stock" ${p.type==='code_stock'?'selected':''}>أكواد / كروت</option>
+        <option value="physical_or_custom" ${p.type==='physical_or_custom'?'selected':''}>منتج مخصص</option>
+      </select>
+    </div>
+    <div class="field"><label>اسم المنتج *</label><input class="input" id="pfName" value="${escapeHtml(p.name)}"></div>
+    <div class="field"><label>الوصف</label><textarea class="input" id="pfDesc">${escapeHtml(p.description||'')}</textarea></div>
+    <div class="field"><label>السعر (${escapeHtml(state.store.currency||'SDG')}) *</label><input class="input" type="number" step="0.01" id="pfPrice" value="${p.price||0}"></div>
+    <div class="field"><label>رابط الصورة</label><input class="input" id="pfImage" value="${escapeHtml(p.image||'')}" placeholder="https://..."></div>
+    <div class="field"><label>الملف الرقمي (للملفات)</label><input class="input" type="file" id="pfFile" onchange="uploadProductFile(this)"><div class="hint" id="pfFileStatus">${p.fileUrl?'الملف الحالي: موجود ✅':''}</div></div>
+    <div id="typeFields"></div>
+    <button class="btn btn-block mt-2" onclick="saveProduct('${id||''}')">حفظ</button>`;
+  renderTypeFields(p);
+  $('#modal').classList.add('show');
+  if (p.fileUrl) state._tempFileUrl = p.fileUrl;
+}
+function onProductTypeChange(){ renderTypeFields({type:$('#pfType').value}); }
+
+function renderTypeFields(p){
+  const type = $('#pfType').value;
+  const w = $('#typeFields');
+  if (type==='game_topup'){
+    const variants = p.variants || [{name:'',price:0}];
+    const fields = p.customFields || [{key:'playerId',label:'Player ID',required:true}];
+    w.innerHTML = `
+      <div class="field"><label>الخيارات (Variants)</label><div id="variantList">
+        ${variants.map((v,i)=>`<div class="row mb-1"><input class="input" style="flex:2" placeholder="الاسم" value="${escapeHtml(v.name)}" data-vname="${i}"><input class="input" style="flex:1" type="number" placeholder="السعر" value="${v.price||0}" data-vprice="${i}"></div>`).join('')}
+      </div><button class="btn btn-ghost btn-sm" onclick="addVariantRow()">+ خيار</button></div>
+      <div class="field"><label>حقول مخصصة للمشتري</label><div id="cfList">
+        ${fields.map((f,i)=>`<div class="row mb-1"><input class="input" style="flex:1" placeholder="Key" value="${escapeHtml(f.key)}" data-cfkey="${i}"><input class="input" style="flex:1" placeholder="التسمية" value="${escapeHtml(f.label)}" data-cflabel="${i}"></div>`).join('')}
+      </div><button class="btn btn-ghost btn-sm" onclick="addCfRow()">+ حقل</button></div>`;
+  } else if (type==='code_stock'){
+    w.innerHTML = `<div class="field"><label>حد التنبيه لانخفاض المخزون</label><input class="input" type="number" id="pfLowStock" value="${p.lowStockThreshold||3}"></div>`;
+  } else w.innerHTML = '';
+}
+function addVariantRow(){ const l=$('#variantList'); const i=l.children.length; const d=document.createElement('div'); d.className='row mb-1'; d.innerHTML=`<input class="input" style="flex:2" placeholder="الاسم" data-vname="${i}"><input class="input" style="flex:1" type="number" placeholder="السعر" data-vprice="${i}">`; l.appendChild(d); }
+function addCfRow(){ const l=$('#cfList'); const i=l.children.length; const d=document.createElement('div'); d.className='row mb-1'; d.innerHTML=`<input class="input" style="flex:1" placeholder="Key" data-cfkey="${i}"><input class="input" style="flex:1" placeholder="التسمية" data-cflabel="${i}">`; l.appendChild(d); }
+
+async function uploadProductFile(input){
+  const file = input.files[0]; if (!file) return;
+  $('#pfFileStatus').textContent = '⏳ جاري الرفع...';
+  try {
+    const ref = storage.ref(`stores/${state.storeId}/files/${Date.now()}-${file.name}`);
+    const snap = await ref.put(file);
+    state._tempFileUrl = await snap.ref.getDownloadURL();
+    $('#pfFileStatus').textContent = '✅ تم الرفع';
+  } catch(e){ $('#pfFileStatus').textContent = '❌ فشل'; toast(e.message,'err'); }
+}
+
+async function saveProduct(id){
+  const type = $('#pfType').value;
+  const data = {
+    type, name:$('#pfName').value.trim(), description:$('#pfDesc').value.trim(),
+    price:+$('#pfPrice').value||0, image:$('#pfImage').value.trim(), active:true,
+    currency: state.store.currency||'SDG',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!data.name){ toast('أدخل اسم المنتج','warn'); return; }
+  if (state._tempFileUrl) data.fileUrl = state._tempFileUrl;
+
+  if (type==='game_topup'){
+    const variants = [];
+    $$('[data-vname]').forEach(inp => { const i = inp.dataset.vname; const name = inp.value.trim(); if (name) variants.push({name, price:+$(`[data-vprice="${i}"]`).value||0}); });
+    const customFields = [];
+    $$('[data-cfkey]').forEach(inp => { const i = inp.dataset.cfkey; const key = inp.value.trim(); const label = $(`[data-cflabel="${i}"]`).value.trim(); if (key&&label) customFields.push({key,label,required:true}); });
+    data.variants = variants; data.customFields = customFields;
+  } else if (type==='code_stock'){
+    data.lowStockThreshold = +$('#pfLowStock').value || 3;
+    if (!id){ data.codes = []; data.availableCodes = 0; }
+  }
+
+  try {
+    const sRef = db.collection('stores').doc(state.storeId).collection('products');
+    if (id) await sRef.doc(id).update(data);
+    else await sRef.add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    closeModal(); toast('تم الحفظ','ok');
+    await loadAll(); renderProducts($('#sections'));
+  } catch(e){ toast(e.message,'err'); }
+}
+
+async function deleteProduct(id){
+  if (!confirm('حذف المنتج؟')) return;
+  await db.collection('stores').doc(state.storeId).collection('products').doc(id).delete();
+  toast('تم الحذف','ok');
+  await loadAll(); renderProducts($('#sections'));
+}
+
+function renderOrders(w){
+  if (!hasPerm('canManageOrders') && !state.isOwner){ w.innerHTML = noPerm(); return; }
+  const f = w.dataset.orderFilter || '';
+  const orders = f ? state.orders.filter(o=>o.status===f) : state.orders;
+  w.innerHTML = `
+    <div class="row-between mb-2">
+      <h2 style="margin:0">الطلبات (${state.orders.length})</h2>
+      <button class="btn btn-outline btn-sm" onclick="exportOrdersCSV()">📥 تصدير CSV</button>
+    </div>
+    <div class="tabs">
+      <button class="tab ${!f?'active':''}" onclick="filterOrders('')">الكل</button>
+      <button class="tab ${f==='pending'?'active':''}" onclick="filterOrders('pending')">قيد الانتظار</button>
+      <button class="tab ${f==='under_review'?'active':''}" onclick="filterOrders('under_review')">تحت المراجعة</button>
+      <button class="tab ${f==='completed'?'active':''}" onclick="filterOrders('completed')">مكتمل</button>
+      <button class="tab ${f==='rejected'?'active':''}" onclick="filterOrders('rejected')">مرفوض</button>
+    </div>
+    <div>${orders.map(o=>`
+      <div class="card mb-1">
+        <div class="row-between">
+          <div><strong>${escapeHtml(o.buyerName||'عميل')}</strong> <span class="order-status status-${o.status}">${statusLabel(o.status)}</span></div>
+          <div class="tiny muted">${fmtDate(o.createdAt)}</div>
+        </div>
+        <div class="small mt-1">${o.items?.map(i=>`${escapeHtml(i.name)}${i.variant?` (${escapeHtml(i.variant)})`:''} ×${i.qty}`).join(' • ')}</div>
+        <div class="row-between mt-1">
+          <div class="tiny">طريقة الدفع: ${escapeHtml(o.paymentMethod||'—')} — المرجع: <code>${escapeHtml(o.transactionRef||'')}</code></div>
+          <strong>${fmtMoney(o.total, state.store.currency)}</strong>
+        </div>
+        <div class="row mt-1">
+          ${o.status!=='completed'?`<button class="btn btn-success btn-sm" onclick="updateOrderStatus('${o.id}','completed')">قبول</button>`:''}
+          ${o.status!=='rejected'?`<button class="btn btn-danger btn-sm" onclick="updateOrderStatus('${o.id}','rejected')">رفض</button>`:''}
+          ${o.status==='pending'?`<button class="btn btn-outline btn-sm" onclick="updateOrderStatus('${o.id}','under_review')">قيد المراجعة</button>`:''}
+          ${o.buyerUid?`<a href="#" class="btn btn-ghost btn-sm" onclick="alert('تواصل مع العميل: ${escapeHtml(o.buyerEmail||'')}');return false">✉️ تواصل</a>`:''}
+        </div>
+      </div>`).join('') || '<div class="empty"><p>لا طلبات</p></div>'}</div>`;
+}
+function filterOrders(f){ $('#sections').dataset.orderFilter = f; renderOrders($('#sections')); }
+
+async function updateOrderStatus(orderId, status){
+  try {
+    const order = state.orders.find(o=>o.id===orderId);
+    const upd = { status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (status==='completed' && order?.items){
+      const items = [...order.items];
+      for (let i=0;i<items.length;i++){
+        const p = state.products.find(pr=>pr.id===items[i].productId);
+        if (p?.type==='code_stock'){
+          const codes = p.codes||[];
+          const unused = codes.filter(c=>!c.used);
+          if (unused.length){
+            const assigned = unused[0].code;
+            codes[codes.findIndex(c=>c.code===assigned)].used = true;
+            await db.collection('stores').doc(state.storeId).collection('products').doc(p.id).update({
+              codes, availableCodes: codes.filter(c=>!c.used).length
+            });
+            items[i].deliveredCode = assigned;
+          }
+        }
+      }
+      upd.items = items;
+    }
+    await db.collection('stores').doc(state.storeId).collection('orders').doc(orderId).update(upd);
+    toast('تم التحديث','ok');
+    await loadAll(); renderOrders($('#sections'));
+  } catch(e){ toast(e.message,'err'); }
+}
+
+function exportOrdersCSV(){
+  const rows = [['الطلب','المشتري','الحالة','المرجع','الإجمالي','العملة','التاريخ']];
+  state.orders.forEach(o => rows.push([o.id, o.buyerName||'', statusLabel(o.status), o.transactionRef||'', o.total, state.store.currency, fmtDate(o.createdAt)]));
+  const csv = '\uFEFF' + rows.map(r=>r.map(c=>`"${(c??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadCSV(csv, 'orders-'+Date.now()+'.csv');
+}
+function downloadCSV(csv, name){
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+
+function renderCoupons(w){
+  if (!hasPerm('canManageCoupons') && !state.isOwner){ w.innerHTML = noPerm(); return; }
+  w.innerHTML = `
+    <div class="row-between mb-2">
+      <h2 style="margin:0">الكوبونات (${state.coupons.length})</h2>
+      <button class="btn" onclick="openCouponForm()">+ كوبون</button>
+    </div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>الكود</th><th>الخصم</th><th>الحد الأدنى</th><th>الحالة</th><th></th></tr></thead>
+      <tbody>${state.coupons.map(c=>`
+        <tr><td><code>${escapeHtml(c.code)}</code></td>
+        <td>${c.discountType==='percent'?c.discountValue+'%':fmtMoney(c.discountValue,state.store.currency)}</td>
+        <td>${c.minOrder?fmtMoney(c.minOrder,state.store.currency):'—'}</td>
+        <td><span class="badge ${c.active?'badge-success':'badge-danger'}">${c.active?'نشط':'موقوف'}</span></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCoupon('${c.id}')">حذف</button></td></tr>`).join('') || '<tr><td colspan="5" class="center muted">لا كوبونات</td></tr>'}
+      </tbody></table></div>`;
+}
+function openCouponForm(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>كوبون جديد</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>الكود *</label><input class="input" id="cCode" placeholder="SUMMER10"></div>
+    <div class="field"><label>النوع</label><select class="input" id="cType"><option value="percent">نسبة مئوية</option><option value="fixed">مبلغ ثابت</option></select></div>
+    <div class="field"><label>القيمة *</label><input class="input" type="number" id="cValue"></div>
+    <div class="field"><label>الحد الأدنى للطلب</label><input class="input" type="number" id="cMin" value="0"></div>
+    <button class="btn btn-block mt-2" onclick="saveCoupon()">حفظ</button>`;
+  $('#modal').classList.add('show');
+}
+async function saveCoupon(){
+  const code = $('#cCode').value.trim().toUpperCase();
+  if (!code){ toast('أدخل الكود','warn'); return; }
+  try {
+    await db.collection('stores').doc(state.storeId).collection('coupons').add({
+      code, discountType:$('#cType').value, discountValue:+$('#cValue').value||0,
+      minOrder:+$('#cMin').value||0, active:true, uses:0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeModal(); toast('تم','ok'); await loadAll(); renderCoupons($('#sections'));
+  } catch(e){ toast(e.message,'err'); }
+}
+async function deleteCoupon(id){ if(!confirm('حذف؟'))return; await db.collection('stores').doc(state.storeId).collection('coupons').doc(id).delete(); toast('تم','ok'); await loadAll(); renderCoupons($('#sections')); }
+
+function renderPayments(w){
+  if (!hasPerm('canEditPayments') && !state.isOwner){ w.innerHTML = noPerm(); return; }
+  w.innerHTML = `
+    <div class="row-between mb-2">
+      <h2 style="margin:0">وسائل الدفع (${state.payments.length})</h2>
+      <button class="btn" onclick="openPaymentForm()">+ إضافة</button>
+    </div>
+    ${state.payments.map(p=>`
+      <div class="prod-row">
+        <div class="info">
+          <h4>${escapeHtml(p.providerLabel||p.provider)}</h4>
+          <div class="tiny muted">${escapeHtml(p.accountNumber||'—')} ${p.beneficiary?'— '+escapeHtml(p.beneficiary):''}</div>
+        </div>
+        <span class="badge ${p.active?'badge-success':'badge-danger'}">${p.active?'نشط':'موقوف'}</span>
+        <div class="actions"><button class="btn btn-danger btn-sm" onclick="deletePayment('${p.id}')">حذف</button></div>
+      </div>`).join('') || '<div class="empty"><p>لا وسائل دفع</p></div>'}`;
+}
+function openPaymentForm(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>وسيلة دفع جديدة</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>المزود</label>
+      <select class="input" id="payProvider">
+        <option value="bankak">بنكك (Bankak)</option>
+        <option value="fawry">فوري (Fawry)</option>
+        <option value="okash">أوكاش (OKASH)</option>
+        <option value="mbanking">MBanking</option>
+        <option value="custom">مخصص</option>
+      </select>
+    </div>
+    <div class="field"><label>الاسم المعروض</label><input class="input" id="payLabel" placeholder="بنكك - حساب التاجر"></div>
+    <div class="field"><label>رقم الحساب / المحفظة *</label><input class="input" id="payAccount"></div>
+    <div class="field"><label>اسم المستفيد</label><input class="input" id="payBeneficiary"></div>
+    <div class="field"><label>تعليمات إضافية</label><textarea class="input" id="payInstructions"></textarea></div>
+    <button class="btn btn-block mt-2" onclick="savePayment()">حفظ</button>`;
+  $('#modal').classList.add('show');
+}
+async function savePayment(){
+  const acct = $('#payAccount').value.trim();
+  if (!acct){ toast('أدخل رقم الحساب','warn'); return; }
+  await db.collection('stores').doc(state.storeId).collection('payments').add({
+    provider:$('#payProvider').value, providerLabel:$('#payLabel').value.trim()||$('#payProvider').value,
+    accountNumber:acct, beneficiary:$('#payBeneficiary').value.trim(),
+    instructions:$('#payInstructions').value.trim(), active:true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  closeModal(); toast('تم','ok'); await loadAll(); renderPayments($('#sections'));
+}
+async function deletePayment(id){ if(!confirm('حذف؟'))return; await db.collection('stores').doc(state.storeId).collection('payments').doc(id).delete(); toast('تم','ok'); await loadAll(); renderPayments($('#sections')); }
+
+async function renderReviews(w){
+  try {
+    const snap = await db.collection('stores').doc(state.storeId).collection('reviews').orderBy('createdAt','desc').limit(50).get();
+    const reviews = snap.docs.map(d=>d.data());
+    w.innerHTML = `<h2>التقييمات (${reviews.length})</h2>
+      ${reviews.map(r=>`<div class="card mb-1"><div class="row-between">
+        <strong>${escapeHtml(r.buyerName||'عميل')}</strong>
+        <span class="stars">${'★'.repeat(r.rating||0)}</span>
+      </div><p class="small mb-0 mt-1">${escapeHtml(r.comment||'')}</p></div>`).join('') || '<div class="empty"><p>لا تقييمات</p></div>'}`;
+  } catch(e){ w.innerHTML = '<p class="muted">تعذر التحميل</p>'; }
+}
+
+function renderStaff(w){
+  if (!state.isOwner){ w.innerHTML = '<div class="banner banner-warn">الطاقم يعرض فقط — صلاحية المالك مطلوبة للإدارة</div>'; return; }
+  w.innerHTML = `
+    <div class="row-between mb-2">
+      <h2 style="margin:0">الطاقم</h2>
+      <button class="btn" onclick="openStaffForm()">+ دعوة عضو</button>
+    </div>
+    <div id="staffList"><div class="empty"><p>جاري التحميل...</p></div></div>`;
+  loadStaffList();
+}
+async function loadStaffList(){
+  const snap = await db.collection('stores').doc(state.storeId).collection('staff').get();
+  const staff = snap.docs.map(d=>({uid:d.id,...d.data()}));
+  $('#staffList').innerHTML = staff.map(s=>`
+    <div class="card mb-1">
+      <div class="row-between">
+        <div><strong>${escapeHtml(s.displayName||s.email||s.uid)}</strong><div class="tiny muted">${escapeHtml(s.email||'')}</div></div>
+        <button class="btn btn-danger btn-sm" onclick="removeStaff('${s.uid}')">إزالة</button>
+      </div>
+      <div class="perm-grid mt-1">
+        ${['canManageProducts','canManageOrders','canManageCoupons','canViewAnalytics','canEditPayments'].map(p=>`
+          <label class="perm-item"><input type="checkbox" ${s.permissions?.[p]?'checked':''} onchange="toggleStaffPerm('${s.uid}','${p}',this.checked)"> ${permLabel(p)}</label>`).join('')}
+      </div>
+    </div>`).join('') || '<div class="empty"><p>لا يوجد طاقم</p></div>';
+}
+function permLabel(p){ return {canManageProducts:'إدارة المنتجات',canManageOrders:'إدارة الطلبات',canManageCoupons:'إدارة الكوبونات',canViewAnalytics:'عرض الإحصائيات',canEditPayments:'تعديل المدفوعات'}[p]; }
+function openStaffForm(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>دعوة عضو</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>البريد الإلكتروني المسجل *</label><input class="input" type="email" id="stEmail"><span class="hint">يجب أن يكون المستخدم لديه حساب على المنصة</span></div>
+    <button class="btn btn-block mt-2" onclick="addStaff()">إضافة</button>`;
+  $('#modal').classList.add('show');
+}
+async function addStaff(){
+  const email = $('#stEmail').value.trim().toLowerCase();
+  if (!email){ toast('أدخل البريد','warn'); return; }
+  try {
+    const q = await db.collection('users').where('email','==',email).limit(1).get();
+    if (q.empty){ toast('لا يوجد مستخدم بهذا البريد','err'); return; }
+    const userDoc = q.docs[0];
+    await db.collection('stores').doc(state.storeId).collection('staff').doc(userDoc.id).set({
+      email, displayName: userDoc.data().displayName||'',
+      permissions:{canManageProducts:true,canManageOrders:true,canManageCoupons:false,canViewAnalytics:true,canEditPayments:false},
+      addedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const uData = userDoc.data();
+    const staffStores = uData.staffStores || [];
+    if (!staffStores.includes(state.storeId)) staffStores.push(state.storeId);
+    await db.collection('users').doc(userDoc.id).update({ role:'staff', staffStores });
+    closeModal(); toast('تمت الإضافة','ok'); loadStaffList();
+  } catch(e){ toast(e.message,'err'); }
+}
+async function toggleStaffPerm(uid, perm, val){
+  await db.collection('stores').doc(state.storeId).collection('staff').doc(uid).update({['permissions.'+perm]:val});
+  toast('تم','ok');
+}
+async function removeStaff(uid){
+  if (!confirm('إزالة العضو؟')) return;
+  await db.collection('stores').doc(state.storeId).collection('staff').doc(uid).delete();
+  const uDoc = await db.collection('users').doc(uid).get();
+  if (uDoc.exists){
+    const arr = (uDoc.data().staffStores||[]).filter(x=>x!==state.storeId);
+    await db.collection('users').doc(uid).update({ staffStores:arr, role: arr.length?'staff':'buyer' });
+  }
+  toast('تمت الإزالة','ok'); loadStaffList();
+}
+
+function renderBranding(w){
+  if (!state.isOwner){ w.innerHTML = '<div class="banner banner-warn">الهوية والإعدادات متاحة للمالك فقط</div>'; return; }
+  const s = state.store;
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>البروفايل</h2>
+      <div class="field"><label>اسم المتجر</label><input class="input" id="bfName" value="${escapeHtml(s.name||'')}"></div>
+      <div class="field"><label>الرابط (slug) — لا يمكن تغييره</label><input class="input" value="${escapeHtml(s.slug||'')}" disabled></div>
+      <div class="field"><label>الوصف</label><textarea class="input" id="bfBio">${escapeHtml(s.bio||'')}</textarea></div>
+      <div class="field"><label>رابط الشعار</label><input class="input" id="bfLogo" value="${escapeHtml(s.logo||'')}"></div>
+      <div class="field"><label>الفئة</label><input class="input" id="bfCat" value="${escapeHtml(s.category||'')}"></div>
+      <div class="field"><label>لون العلامة</label><input class="input" type="color" id="bfColor" value="${s.accentColor||'#4f46e5'}"></div>
+      <div class="field"><label>الثيم</label>
+        <select class="input" id="bfTheme">
+          <option value="classic" ${s.theme==='classic'?'selected':''}>كلاسيكي</option>
+          <option value="modern-dark" ${s.theme==='modern-dark'?'selected':''}>حديث داكن</option>
+          <option value="gaming-grid" ${s.theme==='gaming-grid'?'selected':''}>شبكة الألعاب</option>
+        </select>
+      </div>
+      <div class="field"><label>العملة</label>
+        <select class="input" id="bfCurrency">
+          <option value="SDG" ${s.currency==='SDG'?'selected':''}>SDG — جنيه سوداني</option>
+          <option value="USD" ${s.currency==='USD'?'selected':''}>USD — دولار</option>
+          <option value="EGP" ${s.currency==='EGP'?'selected':''}>EGP — جنيه مصري</option>
+          <option value="SAR" ${s.currency==='SAR'?'selected':''}>SAR — ريال سعودي</option>
+        </select>
+      </div>
+      <div class="field"><label>حالة المتجر</label>
+        <select class="input" id="bfStatus">
+          <option value="active" ${s.status==='active'?'selected':''}>نشط</option>
+          <option value="paused" ${s.status==='paused'?'selected':''}>متوقف مؤقتًا</option>
+        </select>
+      </div>
+      <button class="btn" onclick="saveBranding()">حفظ التغييرات</button>
+    </div>`;
+}
+async function saveBranding(){
+  try {
+    await db.collection('stores').doc(state.storeId).update({
+      name:$('#bfName').value.trim(), bio:$('#bfBio').value.trim(),
+      logo:$('#bfLogo').value.trim(), category:$('#bfCat').value.trim(),
+      accentColor:$('#bfColor').value, theme:$('#bfTheme').value,
+      currency:$('#bfCurrency').value, status:$('#bfStatus').value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const d = await db.collection('stores').doc(state.storeId).get();
+    state.store = d.data();
+    toast('تم الحفظ','ok');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+function renderPlan(w){
+  const plan = state.store.plan || 'free';
+  const plans = {
+    free:{name:'مجاني',price:0,features:['منتجات غير محدودة','طلبات أساسية']},
+    pro:{name:'احترافي',price:5000,features:['كل المزايا','دعم أولوية','تخصيص كامل']},
+    business:{name:'أعمال',price:15000,features:['كل مزايا احترافي','حسابات طاقم متعددة','تقارير متقدمة']}
+  };
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>خطتك الحالية: <span class="badge plan-${plan}">${plans[plan].name}</span></h2>
+      <p class="muted small">التجديد والترقية تتم يدويًا عبر الإدارة</p>
+      <div class="grid grid-3 mt-2">
+        ${Object.entries(plans).map(([k,p])=>`
+          <div class="card ${k===plan?'card-hover':''}" style="border-color:${k===plan?'var(--brand)':'var(--border)'}">
+            <h3>${p.name}</h3>
+            <div style="font-size:1.4rem;font-weight:900;color:var(--brand-dark)">${p.price?fmtMoney(p.price,'SDG'):'مجانًا'}</div>
+            <ul style="padding-inline-start:18px;font-size:.85rem;color:var(--text-2);margin:10px 0">${p.features.map(f=>`<li>${f}</li>`).join('')}</ul>
+            ${k!==plan?`<button class="btn btn-outline btn-block" onclick="requestPlan('${k}')">طلب الترقية</button>`:'<div class="badge badge-success">خطتك الحالية</div>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+async function requestPlan(plan){
+  try {
+    await db.collection('planRequests').add({
+      storeId: state.storeId, storeName: state.store.name,
+      ownerUid: state.user.uid, requestedPlan: plan,
+      status:'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('تم إرسال الطلب للإدارة','ok');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+function hasPerm(p){ return state.isOwner || state.perms?.[p]; }
+function noPerm(){ return '<div class="banner banner-warn">لا تملك صلاحية لهذا القسم</div>'; }
+function closeModal(){ $('#modal').classList.remove('show'); }
+async function doLogout(){ await auth.signOut(); location.href='index.html'; }
+
+/* ✅ Create store — works for any signed-in user (including Google buyers) */
+function openCreateStore(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>إنشاء متجر</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>اسم المتجر *</label><input class="input" id="nsName"></div>
+    <div class="field"><label>الرابط (slug) *</label><input class="input" id="nsSlug" placeholder="my-store"><span class="hint">حروف إنجليزية وأرقام وشرطات فقط</span></div>
+    <div class="field"><label>الوصف</label><textarea class="input" id="nsBio"></textarea></div>
+    <div class="field"><label>الفئة</label><input class="input" id="nsCat" placeholder="إلكترونيات، ألعاب، كتب..."></div>
+    <button class="btn btn-block mt-2" onclick="createStore()">إنشاء</button>`;
+  $('#modal').classList.add('show');
+}
+async function createStore(){
+  const name = $('#nsName').value.trim();
+  const slug = $('#nsSlug').value.trim().toLowerCase();
+  if (!name || !slug){ toast('أكمل البيانات','warn'); return; }
+  if (!/^[a-z0-9\-]+$/.test(slug)){ toast('صيغة الرابط خاطئة','warn'); return; }
+  try {
+    const dup = await db.collection('stores').where('slug','==',slug).limit(1).get();
+    if (!dup.empty){ toast('الرابط مستخدم','err'); return; }
+    await db.collection('stores').add({
+      ownerUid: state.user.uid, slug, name, bio: $('#nsBio').value.trim(),
+      category: $('#nsCat').value.trim(), currency:'SDG', plan:'free',
+      status:'active', verified:false, featured:false, theme:'classic',
+      accentColor:'#4f46e5', logo:'', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Promote to merchant (works for Google buyers too)
+    await db.collection('users').doc(state.user.uid).update({ role:'merchant' });
+    toast('تم إنشاء المتجر','ok');
+    setTimeout(()=>location.reload(), 800);
+  } catch(e){ toast(e.message,'err'); }
+}
+</script>
+<script src="js/ui.js"></script>
+<script src="js/icons.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+   "name": "سوق السودان — منصة التجارة والخدمات الرقمية",
+   "short_name": "سوق السودان",
+   "description": "منصة متعددة البائعين للتجارة الإلكترونية والخدمات الرقمية في السودان والمنطقة",
+   "start_url": "./index.html",
+   "scope": "./",
+   "display": "standalone",
+   "orientation": "portrait-primary",
+   "background_color": "#4f46e5",
+   "theme_color": "#4f46e5",
+   "dir": "rtl",
+   "lang": "ar",
+   "categories": ["shopping", "business"],
+   "icons": [
+      { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+      { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+   ],
+   "shortcuts": [
+      { "name": "المتاجر", "url": "./index.html#stores" },
+      { "name": "لوحة التاجر", "url": "./dashboard.html" },
+      { "name": "الإدارة", "url": "./admin.html" }
+   ]
+}

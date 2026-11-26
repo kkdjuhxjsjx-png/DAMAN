@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة الإدارة — سوق السودان</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/enhance.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+</head>
+<body>
+
+<div id="loading" class="access-denied"><div class="spinner" style="width:36px;height:36px"></div></div>
+
+<div id="denied" class="access-denied" style="display:none">
+  <div class="card">
+    <div style="font-size:3rem">🛡️</div>
+    <h2 style="color:#fff">الوصول مرفوض</h2>
+    <p class="muted">هذه الصفحة مخصصة لمشرفي المنصة فقط.</p>
+    <a href="index.html" class="btn">العودة للرئيسية</a>
+  </div>
+</div>
+
+<div id="adminApp" class="admin-shell" style="display:none">
+  <aside class="admin-side" id="sidebar">
+    <div class="brand"><span class="logo-dot">س</span> سوق السودان<br><small style="font-size:.7rem;opacity:.7">بوابة الإدارة</small></div>
+    <div class="row mb-2" style="padding:0 6px">
+      <div style="font-size:.8rem;color:#94a3b8" id="roleLabel">—</div>
+    </div>
+    <nav class="admin-nav">
+      <a href="#" data-section="stats" class="active">📊 إحصائيات</a>
+      <a href="#" data-section="stores">🏪 المتاجر</a>
+      <a href="#" data-section="reports">🚩 البلاغات</a>
+      <a href="#" data-section="plans">💎 طلبات الخطط</a>
+      <a href="#" data-section="moderators">👤 المشرفون</a>
+      <a href="#" data-section="announcements">📢 الإعلانات</a>
+      <a href="#" data-section="settings">⚙️ إعدادات المنصة</a>
+      <a href="#" data-section="logs">📋 سجل التدقيق</a>
+    </nav>
+    <div class="divider" style="border-color:#1e293b"></div>
+    <a href="index.html" style="color:#94a3b8;font-size:.82rem">← المنصة الرئيسية</a>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="dash-menu-btn" style="color:#fff;border-color:#334155" onclick="document.getElementById('sidebar').classList.toggle('show')">☰</button>
+      <h1 id="pageTitle">الإحصائيات</h1>
+      <div class="row">
+        <span class="badge" id="actorBadge">—</span>
+        <button class="btn btn-ghost btn-sm" style="color:#94a3b8" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+    <div id="maintenanceBanner" class="maintenance-banner" style="display:none">⚠️ وضع الصيانة مفعّل — المنصة معطلة للزوار</div>
+    <div id="sections"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal modal-wide" id="modalBody"></div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAxocPULi4vcrm8t8Q3wYrHQ9oWovHXrV4",
+  authDomain: "daman-7f169.firebaseapp.com",
+  projectId: "daman-7f169",
+  storageBucket: "daman-7f169.firebasestorage.app",
+  messagingSenderId: "981649500667",
+  appId: "1:981649500667:web:7709753041388518b6035e",
+  measurementId: "G-L5PDZL05FT"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore(); try{ db.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(_){}
+
+const $ = s => document.querySelector(s);
+const escapeHtml = s => (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function toast(m,t='ok'){const w=$('#toastWrap');const el=document.createElement('div');el.className='toast '+t;el.textContent=m;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},3200);}
+function fmtDate(ts){ if(!ts) return '—'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+/* ---------- state ---------- */
+let state = {
+  user:null, profile:null, permissions:{}, section:'stats',
+  stores:[], reports:[], planRequests:[], moderators:[], announcements:[],
+  settings:{}, auditLogs:[]
+};
+
+/* ---------- auth gate ---------- */
+async function gate(u){
+  if (!u){ location.replace('index.html?login=1'); return; }
+  state.user = u;
+  const p = await db.collection('users').doc(u.uid).get();
+  state.profile = p.exists ? p.data() : null;
+  const role = state.profile?.role;
+  if (!['super_admin','platform_moderator'].includes(role)){ showDenied(); return; }
+  state.permissions = state.profile?.permissions || {};
+  boot();
+}
+function gateError(err){
+  console.error('Access gate error:', err);
+  showDenied();
+  var p=document.querySelector('#denied p');
+  var code=err&&err.code||'';
+  if(p) p.textContent = code==='permission-denied'
+    ? 'قواعد Firestore ترفض قراءة بياناتك (permission-denied). انشر قواعد الأمان المناسبة من Firebase Console ثم أعد المحاولة.'
+    : 'تعذر التحقق من حسابك: '+(err&&err.message||code||'خطأ غير معروف');
+}
+auth.onAuthStateChanged(function(u){ gate(u).catch(gateError); });
+
+function showDenied(){ $('#loading').style.display='none'; $('#adminApp').style.display='none'; $('#denied').style.display='grid'; }
+
+async function boot(){
+  $('#loading').style.display='none';
+  $('#adminApp').style.display='grid';
+  $('#roleLabel').textContent = state.profile.role==='super_admin' ? 'مدير عام' : 'مشرف';
+  $('#actorBadge').textContent = (state.profile.displayName||'') + (state.profile.role==='super_admin'?' • مدير عام':' • مشرف');
+
+  $$('.admin-nav a').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault(); switchSection(a.dataset.section);
+  }));
+
+  await loadAll();
+  switchSection('stats');
+}
+
+async function loadAll(){
+  try { const s = await db.collection('stores').get(); state.stores = s.docs.map(d=>({id:d.id,...d.data()})); } catch(e){ state.stores = []; }
+  try { const r = await db.collection('reports').orderBy('createdAt','desc').limit(200).get(); state.reports = r.docs.map(d=>({id:d.id,...d.data()})); } catch(e){ state.reports = []; }
+  try { const p = await db.collection('planRequests').where('status','==','pending').get(); state.planRequests = p.docs.map(d=>({id:d.id,...d.data()})); } catch(e){ state.planRequests = []; }
+  try { const m = await db.collection('users').where('role','in',['platform_moderator','super_admin']).get(); state.moderators = m.docs.map(d=>({uid:d.id,...d.data()})); } catch(e){ state.moderators = []; }
+  try { const a = await db.collection('announcements').get(); state.announcements = a.docs.map(d=>({id:d.id,...d.data()})); } catch(e){ state.announcements = []; }
+  try {
+    const st = await db.collection('settings').doc('platform').get();
+    state.settings = st.exists ? st.data() : {};
+    $('#maintenanceBanner').style.display = state.settings.maintenanceMode ? 'block' : 'none';
+  } catch(e){ state.settings = {}; }
+}
+
+function switchSection(sec){
+  state.section = sec;
+  $$('.admin-nav a').forEach(a => a.classList.toggle('active', a.dataset.section===sec));
+  const titles = {stats:'إحصائيات المنصة',stores:'إدارة المتاجر',reports:'البلاغات',
+    plans:'طلبات الترقية',moderators:'المشرفون',announcements:'الإعلانات',settings:'إعدادات المنصة',logs:'سجل التدقيق'};
+  $('#pageTitle').textContent = titles[sec];
+  const w = $('#sections');
+  if (sec==='stats') renderStats(w);
+  else if (sec==='stores') renderStores(w);
+  else if (sec==='reports') renderReports(w);
+  else if (sec==='plans') renderPlans(w);
+  else if (sec==='moderators') renderModerators(w);
+  else if (sec==='announcements') renderAnnouncements(w);
+  else if (sec==='settings') renderSettings(w);
+  else if (sec==='logs') renderLogs(w);
+}
+
+/* ---------- audit ---------- */
+async function logAudit(action, targetId, details){
+  try {
+    await db.collection('auditLogs').add({
+      actorUid: state.user.uid,
+      actorRole: state.profile.role,
+      actorName: state.profile.displayName || '',
+      action, targetId: targetId||'', details: details||'',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e){ console.warn('audit failed', e); }
+}
+
+/* ---------- STATS ---------- */
+function renderStats(w){
+  const active = state.stores.filter(s=>s.status==='active').length;
+  const pending = state.reports.filter(r=>r.status==='open').length;
+  w.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">المتاجر</div><div class="value">${state.stores.length}</div></div>
+      <div class="stat-card"><div class="label">نشطة</div><div class="value" style="color:#34d399">${active}</div></div>
+      <div class="stat-card"><div class="label">موثقة</div><div class="value" style="color:#60a5fa">${state.stores.filter(s=>s.verified).length}</div></div>
+      <div class="stat-card"><div class="label">بلاغات مفتوحة</div><div class="value" style="color:#f87171">${pending}</div></div>
+      <div class="stat-card"><div class="label">طلبات ترقية</div><div class="value" style="color:#fbbf24">${state.planRequests.length}</div></div>
+    </div>
+    <div class="section-panel">
+      <h2>أحدث المتاجر</h2>
+      ${state.stores.slice(-5).reverse().map(s=>`
+        <div class="prod-row">
+          <div class="info"><h4>${escapeHtml(s.name)}</h4><div class="tiny muted">${escapeHtml(s.category||'')} — ${escapeHtml(s.slug)}</div></div>
+          <span class="badge ${s.status==='active'?'badge-success':'badge-warn'}">${s.status}</span>
+        </div>`).join('') || '<p class="muted">لا متاجر</p>'}
+    </div>`;
+}
+
+/* ---------- STORES ---------- */
+function renderStores(w){
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>المتاجر (${state.stores.length})</h2>
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>الاسم</th><th>الرابط</th><th>الحالة</th><th>الخطة</th><th>موثّق</th><th>مميز</th><th>إجراءات</th></tr></thead>
+        <tbody>${state.stores.map(s=>`
+          <tr>
+            <td><strong>${escapeHtml(s.name)}</strong></td>
+            <td><code>${escapeHtml(s.slug)}</code></td>
+            <td><span class="badge ${s.status==='active'?'badge-success':s.status==='paused'?'badge-warn':'badge-danger'}">${s.status}</span></td>
+            <td><span class="badge plan-${s.plan||'free'}">${s.plan||'free'}</span></td>
+            <td>${s.verified?'✅':'—'}</td>
+            <td>${s.featured?'⭐':'—'}</td>
+            <td>
+              <button class="btn btn-outline btn-sm" onclick="toggleVerify('${s.id}',${!s.verified})">${s.verified?'إلغاء':'توثيق'}</button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleFeature('${s.id}',${!s.featured})">${s.featured?'إلغاء تمييز':'تمييز'}</button>
+              ${s.status!=='suspended'?`<button class="btn btn-danger btn-sm" onclick="suspendStore('${s.id}')">تعليق</button>`:`<button class="btn btn-success btn-sm" onclick="reactivateStore('${s.id}')">تفعيل</button>`}
+            </td>
+          </tr>`).join('') || '<tr><td colspan="7" class="center">لا متاجر</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+async function toggleVerify(id, val){ await db.collection('stores').doc(id).update({verified:val}); logAudit(val?'store.verify':'store.unverify', id); toast('تم','ok'); await loadAll(); renderStores($('#sections')); }
+async function toggleFeature(id, val){ await db.collection('stores').doc(id).update({featured:val}); logAudit(val?'store.feature':'store.unfeature', id); toast('تم','ok'); await loadAll(); renderStores($('#sections')); }
+async function suspendStore(id){ if(!confirm('تعليق المتجر؟'))return; await db.collection('stores').doc(id).update({status:'suspended'}); logAudit('store.suspend', id); toast('تم التعليق','ok'); await loadAll(); renderStores($('#sections')); }
+async function reactivateStore(id){ await db.collection('stores').doc(id).update({status:'active'}); logAudit('store.reactivate', id); toast('تم التفعيل','ok'); await loadAll(); renderStores($('#sections')); }
+
+/* ---------- REPORTS ---------- */
+function renderReports(w){
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>البلاغات (${state.reports.length})</h2>
+      ${state.reports.map(r=>`
+        <div class="card mb-1">
+          <div class="row-between">
+            <div><strong>${escapeHtml(r.storeName||r.storeId)}</strong> — <span class="badge">${escapeHtml(r.reason)}</span></div>
+            <span class="badge ${r.status==='open'?'badge-danger':'badge-success'}">${r.status==='open'?'مفتوح':'مغلق'}</span>
+          </div>
+          <p class="small muted mb-1 mt-1">${escapeHtml(r.details||'')}</p>
+          <div class="tiny">بواسطة: ${escapeHtml(r.reporterName||'')} — ${fmtDate(r.createdAt)}</div>
+          ${r.status==='open'?`<button class="btn btn-outline btn-sm mt-1" onclick="resolveReport('${r.id}')">تعليم كمحلول</button>`:''}
+        </div>`).join('') || '<div class="empty"><p>لا بلاغات</p></div>'}
+    </div>`;
+}
+async function resolveReport(id){ await db.collection('reports').doc(id).update({status:'resolved',resolvedAt:firebase.firestore.FieldValue.serverTimestamp()}); logAudit('report.resolve', id); toast('تم','ok'); await loadAll(); renderReports($('#sections')); }
+
+/* ---------- PLANS ---------- */
+function renderPlans(w){
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>طلبات الترقية (${state.planRequests.length})</h2>
+      ${state.planRequests.map(p=>`
+        <div class="card mb-1">
+          <div class="row-between">
+            <div><strong>${escapeHtml(p.storeName||p.storeId)}</strong> → <span class="badge plan-${p.requestedPlan}">${p.requestedPlan}</span></div>
+            <div class="tiny">${fmtDate(p.createdAt)}</div>
+          </div>
+          <div class="row mt-1">
+            <button class="btn btn-success btn-sm" onclick="approvePlan('${p.id}','${p.storeId}','${p.requestedPlan}')">موافقة</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectPlan('${p.id}')">رفض</button>
+          </div>
+        </div>`).join('') || '<div class="empty"><p>لا طلبات</p></div>'}
+    </div>`;
+}
+async function approvePlan(reqId, storeId, plan){
+  await db.collection('stores').doc(storeId).update({plan, planUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.collection('planRequests').doc(reqId).update({status:'approved',resolvedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  logAudit('plan.approve', storeId, plan); toast('تمت الموافقة','ok'); await loadAll(); renderPlans($('#sections'));
+}
+async function rejectPlan(reqId){
+  await db.collection('planRequests').doc(reqId).update({status:'rejected',resolvedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  logAudit('plan.reject', reqId); toast('تم الرفض','ok'); await loadAll(); renderPlans($('#sections'));
+}
+
+/* ---------- MODERATORS ---------- */
+function renderModerators(w){
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>المشرفون (${state.moderators.length})</h2>
+      <button class="btn btn-sm mb-2" onclick="openAddModerator()">+ إضافة مشرف</button>
+      ${state.moderators.map(m=>`
+        <div class="card mb-1">
+          <div class="row-between">
+            <div><strong>${escapeHtml(m.displayName||m.email)}</strong> <span class="badge">${m.role}</span></div>
+            ${m.role!=='super_admin'?`<button class="btn btn-danger btn-sm" onclick="demoteModerator('${m.uid}')">إزالة الصلاحية</button>`:''}
+          </div>
+          <div class="perm-matrix mt-1">
+            ${['canManageStores','canModerateReports','canManagePlans','canManageAnnouncements','canToggleMaintenance','canViewPlatformStats'].map(p=>`
+              <label class="perm-item"><input type="checkbox" ${m.permissions?.[p]?'checked':''} onchange="toggleModPerm('${m.uid}','${p}',this.checked)"> ${permLabel(p)}</label>`).join('')}
+          </div>
+        </div>`).join('') || '<div class="empty"><p>لا مشرفين</p></div>'}
+    </div>`;
+}
+function permLabel(p){ return {canManageStores:'إدارة المتاجر',canModerateReports:'مراجعة البلاغات',canManagePlans:'إدارة الخطط',canManageAnnouncements:'الإعلانات',canToggleMaintenance:'وضع الصيانة',canViewPlatformStats:'الإحصائيات'}[p]; }
+function openAddModerator(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>إضافة مشرف</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>البريد الإلكتروني</label><input class="input" type="email" id="modEmail"></div>
+    <button class="btn btn-block mt-2" onclick="promoteModerator()">إضافة</button>`;
+  $('#modal').classList.add('show');
+}
+async function promoteModerator(){
+  const email = $('#modEmail').value.trim().toLowerCase();
+  const q = await db.collection('users').where('email','==',email).limit(1).get();
+  if (q.empty){ toast('لا يوجد مستخدم','err'); return; }
+  await db.collection('users').doc(q.docs[0].id).update({
+    role:'platform_moderator',
+    permissions:{canManageStores:true,canModerateReports:true,canManagePlans:false,canManageAnnouncements:false,canToggleMaintenance:false,canViewPlatformStats:true}
+  });
+  logAudit('moderator.promote', q.docs[0].id, email);
+  closeModal(); toast('تم','ok'); await loadAll(); renderModerators($('#sections'));
+}
+async function demoteModerator(uid){
+  if (!confirm('إزالة صلاحية الإشراف؟')) return;
+  await db.collection('users').doc(uid).update({role:'buyer', permissions:{}});
+  logAudit('moderator.demote', uid);
+  toast('تم','ok'); await loadAll(); renderModerators($('#sections'));
+}
+async function toggleModPerm(uid, perm, val){
+  await db.collection('users').doc(uid).update({['permissions.'+perm]:val});
+  logAudit('moderator.perm', uid, perm+'='+val);
+  toast('تم','ok');
+}
+
+/* ---------- ANNOUNCEMENTS ---------- */
+function renderAnnouncements(w){
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>الإعلانات</h2>
+      <button class="btn btn-sm mb-2" onclick="openAnnouncementForm()">+ إعلان جديد</button>
+      ${state.announcements.map(a=>`
+        <div class="card mb-1">
+          <div class="row-between"><strong>${escapeHtml(a.text)}</strong>
+            <span class="badge ${a.active?'badge-success':'badge-warn'}">${a.active?'نشط':'موقوف'}</span></div>
+          <div class="row mt-1">
+            <button class="btn btn-outline btn-sm" onclick="toggleAnnouncement('${a.id}',${!a.active})">${a.active?'إيقاف':'تفعيل'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement('${a.id}')">حذف</button>
+          </div>
+        </div>`).join('') || '<div class="empty"><p>لا إعلانات</p></div>'}
+    </div>`;
+}
+function openAnnouncementForm(){
+  $('#modalBody').innerHTML = `
+    <div class="modal-head"><h3>إعلان جديد</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="field"><label>النص</label><textarea class="input" id="annText"></textarea></div>
+    <button class="btn btn-block mt-2" onclick="saveAnnouncement()">نشر</button>`;
+  $('#modal').classList.add('show');
+}
+async function saveAnnouncement(){
+  const text = $('#annText').value.trim();
+  if (!text){ toast('أدخل النص','warn'); return; }
+  await db.collection('announcements').add({text, active:true, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  logAudit('announcement.create', '', text);
+  closeModal(); toast('تم','ok'); await loadAll(); renderAnnouncements($('#sections'));
+}
+async function toggleAnnouncement(id, val){ await db.collection('announcements').doc(id).update({active:val}); logAudit('announcement.toggle', id, val); toast('تم','ok'); await loadAll(); renderAnnouncements($('#sections')); }
+async function deleteAnnouncement(id){ if(!confirm('حذف؟'))return; await db.collection('announcements').doc(id).delete(); logAudit('announcement.delete', id); toast('تم','ok'); await loadAll(); renderAnnouncements($('#sections')); }
+
+/* ---------- SETTINGS ---------- */
+function renderSettings(w){
+  const mm = state.settings.maintenanceMode || false;
+  w.innerHTML = `
+    <div class="section-panel">
+      <h2>إعدادات المنصة</h2>
+      <div class="field">
+        <label class="checkbox"><input type="checkbox" id="maintenanceToggle" ${mm?'checked':''} onchange="toggleMaintenance(this.checked)"> تفعيل وضع الصيانة</label>
+        <span class="hint">عند التفعيل، يتم تعطيل الوصول للجمهور مع إظهار رسالة صيانة</span>
+      </div>
+    </div>`;
+}
+async function toggleMaintenance(val){
+  await db.collection('settings').doc('platform').set({maintenanceMode:val, updatedAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
+  logAudit('platform.maintenance', '', String(val));
+  state.settings.maintenanceMode = val;
+  $('#maintenanceBanner').style.display = val ? 'block' : 'none';
+  toast('تم','ok');
+}
+
+/* ---------- LOGS ---------- */
+async function renderLogs(w){
+  w.innerHTML = '<div class="section-panel"><h2>سجل التدقيق</h2><div class="row mb-2"><button class="btn btn-outline btn-sm" onclick="exportLogsCSV()">📥 تصدير CSV</button></div><div id="logsList"><p class="muted">جاري التحميل...</p></div></div>';
+  try {
+    const snap = await db.collection('auditLogs').orderBy('createdAt','desc').limit(200).get();
+    state.auditLogs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    $('#logsList').innerHTML = state.auditLogs.map(l=>`
+      <div class="prod-row audit-row">
+        <div class="info">
+          <div><strong>${escapeHtml(l.action)}</strong> → ${escapeHtml(l.targetId||'—')}</div>
+          <div class="tiny muted">${escapeHtml(l.actorName||l.actorUid)} (${l.actorRole}) — ${escapeHtml(l.details||'')}</div>
+        </div>
+        <div class="tiny muted">${fmtDate(l.createdAt)}</div>
+      </div>`).join('') || '<p class="muted">لا سجلات</p>';
+  } catch(e){ $('#logsList').innerHTML = '<p class="muted">تعذر تحميل السجل</p>'; }
+}
+function exportLogsCSV(){
+  const rows = [['UID المشرف','الدور','الإجراء','الهدف','التفاصيل','التاريخ']];
+  state.auditLogs.forEach(l => rows.push([l.actorUid, l.actorRole, l.action, l.targetId||'', l.details||'', fmtDate(l.createdAt)]));
+  const csv = '\uFEFF' + rows.map(r=>r.map(c=>`"${(c??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'audit-logs-'+Date.now()+'.csv'; a.click();
+}
+
+/* ---------- misc ---------- */
+function closeModal(){ $('#modal').classList.remove('show'); }
+async function doLogout(){ await auth.signOut(); location.href='index.html'; }
+</script>
+<script src="js/ui.js"></script>
+<script src="js/icons.js"></script>
+</body>
