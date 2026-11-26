@@ -7,11 +7,11 @@
 <title>سوق السودان — منصة التجارة والخدمات الرقمية</title>
 <meta name="description" content="منصة متعددة البائعين للتجارة الإلكترونية والخدمات الرقمية في السودان">
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/core.css">
-<link rel="stylesheet" href="css/enhance.css">
-<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="core.css">
+<link rel="stylesheet" href="enhance.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 </head>
@@ -36,7 +36,7 @@
   <section class="hero">
     <div class="container">
       <h1>كل متاجرك وخدماتك الرقمية في مكان واحد</h1>
-      <p>اكتشف متاجر موثوقة، اشترِ منتجات رقمية، احصل على شحن ألعاب واشتراكات، وادفع عبر بنكك وفوري وأوكاش بكل سهولة.</p>
+      <p>اكتشف متاجر موثوقة، اشترِ منتجات رقمية، احصل على شحن ألعاب واشتراكات، وادفع عبر بنكك وفوري وأوكاش بكل سهولة وأمان.</p>
       <div class="row" style="margin-top:16px">
         <a href="#stores" class="btn btn-light">تصفح المتاجر</a>
         <a href="dashboard.html" class="btn btn-outline">افتح متجرك الآن</a>
@@ -51,89 +51,37 @@
     </div>
     <div class="filter-bar">
       <input class="input" id="searchInput" type="search" placeholder="ابحث عن متجر بالاسم أو الوصف..." style="flex:1;min-width:200px">
-      <select class="input" id="categoryFilter" style="max-width:200px">
-        <option value="">كل الفئات</option>
-      </select>
+      <select class="input" id="categoryFilter" style="max-width:200px"><option value="">كل الفئات</option></select>
     </div>
     <div id="storesGrid" class="grid grid-3">
       <div class="card sk-card skeleton"></div><div class="card sk-card skeleton"></div><div class="card sk-card skeleton"></div>
     </div>
     <div id="storesEmpty" class="empty hide">
-      <div class="icon">🏪</div>
-      <h3>لا توجد متاجر مطابقة</h3>
-      <p class="muted">جرّب بحثًا مختلفًا أو تصفح الفئات</p>
-    </div>
-  </section>
-
-  <section style="background:var(--surface-2);padding:44px 0">
-    <div class="container">
-      <h2 class="center mb-3">كيف تعمل المنصة؟</h2>
-      <div class="grid grid-3">
-        <div class="card"><h3>🏪 أنشئ متجرك</h3><p class="muted small mb-0">سجّل كتاجر، خصص العلامة التجارية، وأضف منتجاتك الرقمية خلال دقائق.</p></div>
-        <div class="card"><h3>💳 استلم مدفوعاتك</h3><p class="muted small mb-0">أضف حساباتك في بنكك، فوري، أوكاش أو حساباتك الخاصة، وأكّد الطلبات برقم العملية.</p></div>
-        <div class="card"><h3>📦 سلّم بضاعتك</h3><p class="muted small mb-0">ملفات رقمية، أكواد جاهزة، شحن ألعاب، أو منتجات مخصصة — كل شيء تحت السيطرة.</p></div>
-      </div>
+      <div class="icon">🏪</div><h3>لا توجد متاجر مطابقة</h3><p class="muted">جرّب بحثًا مختلفًا أو تصفح الفئات</p>
     </div>
   </section>
 </main>
 
-<footer class="site-footer">
-  <div class="container">
-    <div class="cols">
-      <div><div class="brand" style="color:#fff"><span class="logo-dot">س</span> سوق السودان</div><p style="margin-top:10px">منصة متعددة البائعين للسوق السوداني، جاهزة للتوسع الإقليمي.</p></div>
-      <div><h4>للأعمال</h4><p><a href="dashboard.html">لوحة التاجر</a></p><p><a href="#stores">تصفح المتاجر</a></p></div>
-      <div><h4>قانوني</h4><p><a href="#" onclick="toast('سيتم إضافة السياسات قريبًا','warn');return false">شروط الاستخدام</a></p><p><a href="#" onclick="toast('سيتم إضافة السياسات قريبًا','warn');return false">سياسة الخصوصية</a></p></div>
-    </div>
-    <div class="copy">© <span id="year"></span> سوق السودان — جميع الحقوق محفوظة</div>
-  </div>
-</footer>
+<footer class="site-footer"><div class="container"><div class="copy">© <span id="year"></span> سوق السودان — جميع الحقوق محفوظة</div></div></footer>
 
-<div id="pwaInstallBanner">
-  <span style="font-size:1.6rem">📲</span>
-  <div style="flex:1"><strong>ثبّت التطبيق</strong><div class="tiny muted">تجربة أسرع وأفضل بدون متصفح</div></div>
-  <button class="btn btn-sm" id="pwaInstallBtn">تثبيت</button>
-  <button class="icon-btn" id="pwaDismissBtn" aria-label="إغلاق">✕</button>
-</div>
-
-<!-- ✅ Auth modal with Google Sign-In -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <div class="modal-head"><h3 id="authTitle">تسجيل الدخول</h3><button class="icon-btn" onclick="closeAuth()">✕</button></div>
-
-    <button class="btn btn-google btn-block" onclick="signInWithGoogle()" id="googleBtn">
-      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
-      المتابعة باستخدام جوجل
-    </button>
-
-    <div class="auth-divider"><span>أو</span></div>
-
+    <button class="btn btn-google btn-block" onclick="signInWithGoogle()" id="googleBtn">المتابعة باستخدام جوجل</button>
     <div class="tabs" style="margin-bottom:16px">
       <button class="tab active" id="tabLogin" onclick="switchAuthTab('login')">دخول بالبريد</button>
       <button class="tab" id="tabRegister" onclick="switchAuthTab('register')">حساب جديد</button>
     </div>
-
     <form id="loginForm" onsubmit="return doLogin(event)">
-      <div class="field"><label>البريد الإلكتروني</label><input class="input" type="email" id="loginEmail" required autocomplete="email"></div>
-      <div class="field"><label>كلمة المرور</label><input class="input" type="password" id="loginPassword" required autocomplete="current-password"></div>
+      <div class="field"><label>البريد الإلكتروني</label><input class="input" type="email" id="loginEmail" required></div>
+      <div class="field"><label>كلمة المرور</label><input class="input" type="password" id="loginPassword" required></div>
       <button class="btn btn-block" type="submit" id="loginBtn">دخول</button>
-      <p class="center small mt-2 mb-0"><a href="#" onclick="doReset();return false">نسيت كلمة المرور؟</a></p>
     </form>
-
     <form id="registerForm" class="hide" onsubmit="return doRegister(event)">
       <div class="field"><label>الاسم الكامل</label><input class="input" id="regName" required></div>
-      <div class="field"><label>البريد الإلكتروني</label><input class="input" type="email" id="regEmail" required autocomplete="email"></div>
-      <div class="field"><label>كلمة المرور</label><input class="input" type="password" id="regPassword" required minlength="6" autocomplete="new-password"><span class="hint">6 أحرف على الأقل</span></div>
-      <div class="field"><label>نوع الحساب</label>
-        <select class="input" id="regRole">
-          <option value="buyer">مشتري</option>
-          <option value="merchant">تاجر (سأفتح متجرًا)</option>
-        </select>
-      </div>
+      <div class="field"><label>البريد الإلكتروني</label><input class="input" type="email" id="regEmail" required></div>
+      <div class="field"><label>كلمة المرور</label><input class="input" type="password" id="regPassword" required minlength="6"></div>
+      <div class="field"><label>نوع الحساب</label><select class="input" id="regRole"><option value="buyer">مشتري</option><option value="merchant">تاجر</option></select></div>
       <button class="btn btn-block" type="submit" id="regBtn">إنشاء الحساب</button>
     </form>
   </div>
@@ -146,263 +94,28 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
-/* ============================================================
-   ✅ Firebase config — updated with your real project
-   ============================================================ */
-const firebaseConfig = {
-  apiKey: "AIzaSyAxocPULi4vcrm8t8Q3wYrHQ9oWovHXrV4",
-  authDomain: "daman-7f169.firebaseapp.com",
-  projectId: "daman-7f169",
-  storageBucket: "daman-7f169.firebasestorage.app",
-  messagingSenderId: "981649500667",
-  appId: "1:981649500667:web:7709753041388518b6035e",
-  measurementId: "G-L5PDZL05FT"
-};
-
-let app, auth, db, storage;
-try {
-  app = firebase.initializeApp(firebaseConfig);
-  auth = firebase.auth(); db = firebase.firestore(); try{ db.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(_){} storage = firebase.storage();
-} catch(e){ console.error('Firebase init error:', e); }
-
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
-function toast(msg, type='ok'){
-  const w = $('#toastWrap'); const t = document.createElement('div');
-  t.className = 'toast ' + type; t.textContent = msg; w.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 3200);
-}
-function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-/* ---------- Auth state ---------- */
-let currentUser = null, currentProfile = null;
-let stores = [], filtered = [];
-
-function openAuth(){ $('#authModal').classList.add('show'); switchAuthTab('login'); }
-function closeAuth(){ $('#authModal').classList.remove('show'); }
-function switchAuthTab(which){
-  const isLogin = which === 'login';
-  $('#tabLogin').classList.toggle('active', isLogin);
-  $('#tabRegister').classList.toggle('active', !isLogin);
-  $('#loginForm').classList.toggle('hide', !isLogin);
-  $('#registerForm').classList.toggle('hide', isLogin);
-  $('#authTitle').textContent = isLogin ? 'تسجيل الدخول' : 'إنشاء حساب';
-}
-
-/* ---------- Google Sign-In ---------- */
-async function ensureUserDoc(user){
-  const ref = db.collection('users').doc(user.uid);
-  const snap = await ref.get();
-  if (!snap.exists){
-    await ref.set({
-      displayName: user.displayName || '',
-      email: user.email || '',
-      role: 'buyer',
-      photoURL: user.photoURL || '',
-      provider: user.providerData?.[0]?.providerId || 'google.com',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    return { role:'buyer', displayName: user.displayName, photoURL: user.photoURL };
-  }
-  return snap.data();
-}
-
-async function signInWithGoogle(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  const btn = $('#googleBtn');
-  if (btn){ btn.disabled = true; }
-  try {
-    const result = await auth.signInWithPopup(provider);
-    await ensureUserDoc(result.user);
-    closeAuth();
-    toast('أهلًا بك، ' + (result.user.displayName || ''), 'ok');
-  } catch(err){
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment'){
-      toast('يتم تحويلك لجوجل...', 'warn');
-      try { await auth.signInWithRedirect(provider); }
-      catch(e2){ toast('فشل الدخول: ' + (e2.message||e2.code), 'err'); }
-    } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request'){
-      /* ignored */
-    } else if (err.code === 'auth/account-exists-with-different-credential'){
-      toast('هذا البريد مسجل بكلمة مرور. استخدم الدخول بالبريد.', 'warn');
-    } else if (err.code === 'auth/unauthorized-domain'){
-      toast('النطاق غير مصرح به. أضفه في Firebase Console → Authentication → Authorized domains', 'err');
-    } else {
-      toast('فشل الدخول: ' + (err.message||err.code), 'err');
-    }
-  } finally {
-    if (btn){ btn.disabled = false; }
-  }
-}
-
-/* ---------- Email/Password ---------- */
-async function doLogin(e){
-  e.preventDefault();
-  const btn = $('#loginBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري الدخول';
-  try {
-    await auth.signInWithEmailAndPassword($('#loginEmail').value.trim(), $('#loginPassword').value);
-    closeAuth(); toast('أهلًا بك مجددًا!', 'ok');
-  } catch(err){ toast('فشل الدخول: ' + (err.message||err.code), 'err'); }
-  finally { btn.disabled = false; btn.textContent = 'دخول'; }
-  return false;
-}
-
-async function doRegister(e){
-  e.preventDefault();
-  const btn = $('#regBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> جاري الإنشاء';
-  try {
-    const name = $('#regName').value.trim();
-    const email = $('#regEmail').value.trim();
-    const role = $('#regRole').value;
-    const cred = await auth.createUserWithEmailAndPassword(email, $('#regPassword').value);
-    await cred.user.updateProfile({ displayName: name });
-    await db.collection('users').doc(cred.user.uid).set({
-      displayName: name, email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    closeAuth(); toast('تم إنشاء الحساب بنجاح!', 'ok');
-    if (role === 'merchant') setTimeout(()=>location.href = 'dashboard.html', 700);
-  } catch(err){ toast('فشل التسجيل: ' + (err.message||err.code), 'err'); }
-  finally { btn.disabled = false; btn.textContent = 'إنشاء الحساب'; }
-  return false;
-}
-
-async function doReset(){
-  const email = $('#loginEmail').value.trim();
-  if (!email){ toast('أدخل بريدك أولًا','warn'); return; }
-  try { await auth.sendPasswordResetEmail(email); toast('تم إرسال رابط الاستعادة','ok'); }
-  catch(e){ toast('تعذر الإرسال: '+e.message,'err'); }
-}
-
-async function doLogout(){ await auth.signOut(); toast('تم تسجيل الخروج','ok'); }
-
-async function handleAuth(user){
-  currentUser = user;
-  if (user){
-    $('#btnAuth').style.display = 'none';
-    $('#btnLogout').style.display = '';
-    const profSnap = await db.collection('users').doc(user.uid).get();
-    currentProfile = profSnap.exists
-      ? profSnap.data()
-      : { role:'buyer', displayName: user.displayName, photoURL: user.photoURL };
-    $('#navDashboard').style.display = '';
-    if (['super_admin','platform_moderator'].includes(currentProfile.role)) $('#navAdmin').style.display = '';
-  } else {
-    currentUser = null; currentProfile = null;
-    $('#btnAuth').style.display = ''; $('#btnLogout').style.display = 'none';
-    $('#navDashboard').style.display = 'none'; $('#navAdmin').style.display = 'none';
-  }
-}
-
-/* ---------- Stores directory ---------- */
-async function loadStores(){
-  try {
-    const snap = await db.collection('stores').where('status','==','active').get();
-    stores = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    stores.sort((a,b) => {
-      const fa = a.featured?1:0, fb = b.featured?1:0;
-      if (fb !== fa) return fb - fa;
-      const va = a.verified?1:0, vb = b.verified?1:0;
-      if (vb !== va) return vb - va;
-      return (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
-    });
-    try{ sessionStorage.setItem('stores_cache', JSON.stringify(stores)); }catch(_){}
-    buildCategoryOptions();
-    applyFilters();
-  } catch(e){ console.error(e); toast('تعذر تحميل المتاجر: '+e.message,'err'); }
-}
-
-function buildCategoryOptions(){
-  const cats = new Set();
-  stores.forEach(s => s.category && cats.add(s.category));
-  const sel = $('#categoryFilter');
-  [...cats].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
-}
-
-function applyFilters(){
-  const q = $('#searchInput').value.trim().toLowerCase();
-  const cat = $('#categoryFilter').value;
-  filtered = stores.filter(s => {
-    if (cat && s.category !== cat) return false;
-    if (q){
-      const hay = (s.name+' '+(s.bio||'')+' '+(s.category||'')+' '+s.slug).toLowerCase();
-      return hay.includes(q);
-    }
-    return true;
-  });
-  renderStores();
-}
-
-function renderStores(){
-  const grid = $('#storesGrid'), empty = $('#storesEmpty');
-  $('#storeCount').textContent = filtered.length + ' متجر';
-  if (!filtered.length){ grid.innerHTML = ''; empty.classList.remove('hide'); return; }
-  empty.classList.add('hide');
-  grid.innerHTML = filtered.map(s => `
-    <div class="card card-hover" style="display:flex;flex-direction:column;gap:12px">
-      <div class="row">
-        <img class="avatar" src="${escapeHtml(s.logo||'assets/icons/icon-192.png')}" alt="" onerror="this.src='assets/icons/icon-192.png'">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <strong style="font-size:1rem">${escapeHtml(s.name)}</strong>
-            ${s.verified?'<span class="badge badge-verified">✔ موثّق</span>':''}
-            ${s.featured?'<span class="badge badge-featured">⭐ مميز</span>':''}
-          </div>
-          <div class="tiny muted">${escapeHtml(s.category||'عام')}</div>
-        </div>
-      </div>
-      <p class="small muted" style="margin:0;min-height:2.4em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(s.bio||'مرحبًا بكم في متجرنا')}</p>
-      <a href="store.html?s=${encodeURIComponent(s.slug)}" class="btn">زيارة المتجر</a>
-    </div>`).join('');
-}
-
-/* ---------- PWA install ---------- */
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
-  if (!localStorage.getItem('pwa_dismissed')) $('#pwaInstallBanner').classList.add('show');
-});
-$('#pwaInstallBtn').addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt(); await deferredPrompt.userChoice;
-  deferredPrompt = null; $('#pwaInstallBanner').classList.remove('show');
-});
-$('#pwaDismissBtn').addEventListener('click', () => {
-  $('#pwaInstallBanner').classList.remove('show');
-  localStorage.setItem('pwa_dismissed','1');
-});
-
-/* ---------- Offline ---------- */
-function updateOnline(){ $('#offlineBanner').classList.toggle('hide', navigator.onLine); }
-window.addEventListener('online', updateOnline);
-window.addEventListener('offline', updateOnline);
-
-/* ---------- Init ---------- */
-$('#year').textContent = new Date().getFullYear();
-$('#searchInput').addEventListener('input', applyFilters);
-$('#categoryFilter').addEventListener('change', applyFilters);
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-updateOnline();
-if (auth) auth.onAuthStateChanged(handleAuth);
-try{ var _c=JSON.parse(sessionStorage.getItem('stores_cache')||'null'); if(_c&&_c.length){ stores=_c; buildCategoryOptions(); applyFilters(); } }catch(_){}
-loadStores();
-if (/[?&]login=1/.test(location.search)) setTimeout(openAuth, 300);
-
-/* ✅ Handle Google redirect return */
-if (auth){
-  auth.getRedirectResult().then(async (result) => {
-    if (result?.user){
-      await ensureUserDoc(result.user);
-      toast('أهلًا بك، ' + (result.user.displayName || ''), 'ok');
-    }
-  }).catch(err => {
-    if (!['auth/no-current-user','auth/redirect-cancelled-by-user','auth/redirect-operation-pending'].includes(err.code)){
-      console.warn('Redirect result:', err);
-    }
-  });
-}
+const firebaseConfig={apiKey:"AIzaSyAxocPULi4vcrm8t8Q3wYrHQ9oWovHXrV4",authDomain:"daman-7f169.firebaseapp.com",projectId:"daman-7f169",storageBucket:"daman-7f169.firebasestorage.app",messagingSenderId:"981649500667",appId:"1:981649500667:web:7709753041388518b6035e",measurementId:"G-L5PDZL05FT"};
+let app,auth,db,storage;
+try{app=firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch{}storage=firebase.storage();}catch(e){console.error(e)}
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function toast(msg,type='ok'){const w=$('#toastWrap'),t=document.createElement('div');t.className='toast '+type;t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function escapeHtml(s){return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+let currentUser=null,currentProfile=null,stores=[],filtered=[];
+function openAuth(){ $('#authModal').classList.add('show');switchAuthTab('login') }function closeAuth(){ $('#authModal').classList.remove('show') }
+function switchAuthTab(which){const login=which==='login';$('#tabLogin').classList.toggle('active',login);$('#tabRegister').classList.toggle('active',!login);$('#loginForm').classList.toggle('hide',!login);$('#registerForm').classList.toggle('hide',login);$('#authTitle').textContent=login?'تسجيل الدخول':'إنشاء حساب'}
+async function ensureUserDoc(user){const ref=db.collection('users').doc(user.uid),snap=await ref.get();if(!snap.exists){await ref.set({displayName:user.displayName||'',email:user.email||'',role:'buyer',photoURL:user.photoURL||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});return{role:'buyer',displayName:user.displayName,photoURL:user.photoURL}}return snap.data()}
+async function signInWithGoogle(){const provider=new firebase.auth.GoogleAuthProvider();try{const result=await auth.signInWithPopup(provider);await ensureUserDoc(result.user);closeAuth();toast('أهلًا بك، '+(result.user.displayName||''));}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){try{await auth.signInWithRedirect(provider)}catch(x){toast('فشل الدخول: '+(x.message||x.code),'err')}}else toast('فشل الدخول: '+(e.message||e.code),'err')}}
+async function doLogin(e){e.preventDefault();try{await auth.signInWithEmailAndPassword($('#loginEmail').value.trim(),$('#loginPassword').value);closeAuth();toast('أهلًا بك مجددًا!')}catch(e){toast('فشل الدخول: '+(e.message||e.code),'err')}return false}
+async function doRegister(e){e.preventDefault();try{const name=$('#regName').value.trim(),email=$('#regEmail').value.trim(),role=$('#regRole').value,cred=await auth.createUserWithEmailAndPassword(email,$('#regPassword').value);await cred.user.updateProfile({displayName:name});await db.collection('users').doc(cred.user.uid).set({displayName:name,email,role,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeAuth();toast('تم إنشاء الحساب بنجاح!');if(role==='merchant')setTimeout(()=>location.href='dashboard.html',700)}catch(e){toast('فشل التسجيل: '+(e.message||e.code),'err')}return false}
+async function doLogout(){await auth.signOut();toast('تم تسجيل الخروج')}
+async function handleAuth(user){currentUser=user;if(user){$('#btnAuth').style.display='none';$('#btnLogout').style.display='';const snap=await db.collection('users').doc(user.uid).get();currentProfile=snap.exists?snap.data():{role:'buyer'};$('#navDashboard').style.display='';if(['super_admin','platform_moderator'].includes(currentProfile.role))$('#navAdmin').style.display=''}else{$('#btnAuth').style.display='';$('#btnLogout').style.display='none';$('#navDashboard').style.display='none';$('#navAdmin').style.display='none'}}
+async function loadStores(){try{const snap=await db.collection('stores').where('status','==','active').get();stores=snap.docs.map(d=>({id:d.id,...d.data()}));stores.sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)||(b.verified?1:0)-(a.verified?1:0));buildCategoryOptions();applyFilters()}catch(e){console.error(e);toast('تعذر تحميل المتاجر: '+e.message,'err')}}
+function buildCategoryOptions(){const cats=new Set;stores.forEach(s=>s.category&&cats.add(s.category));const sel=$('#categoryFilter');[...cats].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)})}
+function applyFilters(){const q=$('#searchInput').value.trim().toLowerCase(),cat=$('#categoryFilter').value;filtered=stores.filter(s=>{if(cat&&s.category!==cat)return false;if(q)return(s.name+' '+(s.bio||'')+' '+(s.category||'')+' '+s.slug).toLowerCase().includes(q);return true});renderStores()}
+function renderStores(){const grid=$('#storesGrid'),empty=$('#storesEmpty');$('#storeCount').textContent=filtered.length+' متجر';if(!filtered.length){grid.innerHTML='';empty.classList.remove('hide');return}empty.classList.add('hide');grid.innerHTML=filtered.map(s=>`<div class="card card-hover" style="display:flex;flex-direction:column;gap:12px"><div class="row"><img class="avatar" src="${escapeHtml(s.logo||'assets/icons/icon-192.png')}" onerror="this.src='assets/icons/icon-192.png'"><strong>${escapeHtml(s.name)}</strong></div><p class="small muted">${escapeHtml(s.bio||'')}</p><a href="store.html?s=${encodeURIComponent(s.slug)}" class="btn">زيارة المتجر</a></div>`).join('')}
+$('#year').textContent=new Date().getFullYear();$('#searchInput').addEventListener('input',applyFilters);$('#categoryFilter').addEventListener('change',applyFilters);if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});if(auth){auth.onAuthStateChanged(handleAuth);auth.getRedirectResult().catch(()=>{})}loadStores();
 </script>
-<script src="js/ui.js"></script>
-<script src="js/icons.js"></script>
+<script src="ui.js"></script>
+<script src="icons.js"></script>
 </body>
 </html>
